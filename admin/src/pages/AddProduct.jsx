@@ -82,6 +82,14 @@ export default function AddProduct() {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    // Validate image on new product
+    if (!isEdit && !image) {
+      setError("Please upload a product image.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const fd = new FormData();
       fd.append("name",        form.name);
