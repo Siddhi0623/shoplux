@@ -108,8 +108,15 @@ export default function CollectionPage() {
     if (activeCategory !== "All")
       result = result.filter((p) => p.category === activeCategory);
 
-    if (activeSubCategory)
-      result = result.filter((p) => p.subCategory === activeSubCategory);
+    if (activeSubCategory) {
+      const subFiltered = result.filter((p) => p.subCategory === activeSubCategory);
+      // If products have subCategory set, use exact match; otherwise search by name
+      result = subFiltered.length > 0
+        ? subFiltered
+        : result.filter((p) =>
+            p.name.toLowerCase().includes(activeSubCategory.toLowerCase())
+          );
+    }
 
     if (selectedSizes.length > 0)
       result = result.filter((p) =>
