@@ -8,7 +8,7 @@ export default function FeaturedProducts() {
   const { products } = useShop();
   const [activeCategory, setActiveCategory] = useState("All");
 
-  const categories = ["All", ...new Set(products.map((p) => p.category))];
+  const categories = ["All", "Men", "Women", "Kids", "Electronics", "Sale"];
 
   const filtered =
     activeCategory === "All"

@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, SlidersHorizontal, ChevronDown, X, LayoutGrid, List } from "lucide-react";
 import ProductCard from "./ProductCard";
 import { useShop } from "./context/ShopContext";
@@ -35,18 +36,27 @@ function FilterSection({ title, open, onToggle, children }) {
   );
 }
 
+const FIXED_CATEGORIES = ["All", "Men", "Women", "Kids", "Electronics", "Sale"];
+
 export default function CollectionPage() {
   const { products } = useShop();
-  const categories = ["All", ...new Set(products.map((p) => p.category))];
+  const [searchParams] = useSearchParams();
 
-  // Filter state
-  const [search,       setSearch]       = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [selectedSizes,  setSelectedSizes]  = useState([]);
+  // Filter state — initialised from URL query params
+  const [search,             setSearch]             = useState("");
+  const [activeCategory,     setActiveCategory]     = useState(searchParams.get("category") || "All");
+  const [activeSubCategory,  setActiveSubCategory]  = useState(searchParams.get("sub") || "");
+  const [selectedSizes,      setSelectedSizes]      = useState([]);
   const [selectedPriceRange, setSelectedPriceRange] = useState(null);
-  const [inStockOnly,  setInStockOnly]  = useState(false);
-  const [onSaleOnly,   setOnSaleOnly]   = useState(false);
-  const [sortBy,       setSortBy]       = useState("featured");
+  const [inStockOnly,        setInStockOnly]        = useState(false);
+  const [onSaleOnly,         setOnSaleOnly]         = useState(false);
+  const [sortBy,             setSortBy]             = useState("featured");
+
+  // Re-apply filters when URL params change (e.g. clicking navbar links)
+  useEffect(() => {
+    setActiveCategory(searchParams.get("category") || "All");
+    setActiveSubCategory(searchParams.get("sub") || "");
+  }, [searchParams]);
 
   // UI state
   const [showFilters,  setShowFilters]  = useState(true);
@@ -67,6 +77,7 @@ export default function CollectionPage() {
 
   const activeFilterCount = [
     activeCategory !== "All",
+    activeSubCategory !== "",
     selectedSizes.length > 0,
     selectedPriceRange !== null,
     inStockOnly,
@@ -77,6 +88,7 @@ export default function CollectionPage() {
   const clearAllFilters = () => {
     setSearch("");
     setActiveCategory("All");
+    setActiveSubCategory("");
     setSelectedSizes([]);
     setSelectedPriceRange(null);
     setInStockOnly(false);
@@ -89,11 +101,15 @@ export default function CollectionPage() {
     if (search.trim())
       result = result.filter((p) =>
         p.name.toLowerCase().includes(search.trim().toLowerCase()) ||
-        p.category.toLowerCase().includes(search.trim().toLowerCase())
+        p.category.toLowerCase().includes(search.trim().toLowerCase()) ||
+        (p.subCategory || "").toLowerCase().includes(search.trim().toLowerCase())
       );
 
     if (activeCategory !== "All")
       result = result.filter((p) => p.category === activeCategory);
+
+    if (activeSubCategory)
+      result = result.filter((p) => p.subCategory === activeSubCategory);
 
     if (selectedSizes.length > 0)
       result = result.filter((p) =>
@@ -125,10 +141,10 @@ export default function CollectionPage() {
       {/* Category */}
       <FilterSection title="Category" open={openSections.category} onToggle={() => toggleSection("category")}>
         <ul className="space-y-1">
-          {categories.map((cat) => (
+          {FIXED_CATEGORIES.map((cat) => (
             <li key={cat}>
               <button
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => { setActiveCategory(cat); setActiveSubCategory(""); }}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
                   activeCategory === cat
                     ? "bg-indigo-50 text-indigo-600 font-semibold"
@@ -310,7 +326,13 @@ export default function CollectionPage() {
             {activeCategory !== "All" && (
               <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-600 text-xs font-semibold px-3 py-1.5 rounded-full">
                 {activeCategory}
-                <button onClick={() => setActiveCategory("All")}><X size={11} /></button>
+                <button onClick={() => { setActiveCategory("All"); setActiveSubCategory(""); }}><X size={11} /></button>
+              </span>
+            )}
+            {activeSubCategory && (
+              <span className="inline-flex items-center gap-1.5 bg-purple-50 text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-full">
+                {activeSubCategory}
+                <button onClick={() => setActiveSubCategory("")}><X size={11} /></button>
               </span>
             )}
             {selectedPriceRange && (

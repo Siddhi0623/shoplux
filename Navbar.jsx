@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Search, Heart, ShoppingCart, ChevronDown,
   X, Menu, User, LogIn, LogOut, Package,
@@ -62,6 +62,8 @@ export default function Navbar() {
 
   const menuLeaveTimer = useRef(null);
   const dropdownTimer  = useRef(null);
+
+  const closeAll = () => { setActiveMenu(null); setMobileOpen(false); };
 
   const openMenu  = (label) => { clearTimeout(menuLeaveTimer.current); setActiveMenu(label); };
   const closeMenu = ()      => { menuLeaveTimer.current = setTimeout(() => setActiveMenu(null), 150); };
@@ -197,12 +199,16 @@ export default function Navbar() {
             <ul className="flex items-center gap-1">
               {megaMenuData.map((menu) => (
                 <li key={menu.label} className="relative" onMouseEnter={() => menu.categories.length && openMenu(menu.label)} onMouseLeave={closeMenu}>
-                  <button className={`flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors ${activeMenu === menu.label ? "text-indigo-600" : "text-gray-700 hover:text-indigo-600"} ${menu.label === "Sale" ? "text-red-500 hover:text-red-600" : ""}`}>
+                  <Link
+                    to={`/collection?category=${menu.label}`}
+                    onClick={closeAll}
+                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors ${activeMenu === menu.label ? "text-indigo-600" : "text-gray-700 hover:text-indigo-600"} ${menu.label === "Sale" ? "text-red-500 hover:text-red-600" : ""}`}
+                  >
                     {menu.label}
                     {menu.categories.length > 0 && (
                       <ChevronDown size={14} className={`transition-transform duration-200 ${activeMenu === menu.label ? "rotate-180" : ""}`} />
                     )}
-                  </button>
+                  </Link>
 
                   {menu.categories.length > 0 && (
                     <div
@@ -217,7 +223,13 @@ export default function Navbar() {
                             <ul className="space-y-2">
                               {cat.items.map((item) => (
                                 <li key={item}>
-                                  <a href="#" className="text-sm text-gray-600 hover:text-indigo-600 hover:translate-x-1 inline-flex transition-all duration-150">{item}</a>
+                                  <Link
+                                    to={`/collection?category=${menu.label}&sub=${encodeURIComponent(item)}`}
+                                    onClick={closeAll}
+                                    className="text-sm text-gray-600 hover:text-indigo-600 hover:translate-x-1 inline-flex transition-all duration-150"
+                                  >
+                                    {item}
+                                  </Link>
                                 </li>
                               ))}
                             </ul>
@@ -262,10 +274,14 @@ export default function Navbar() {
               <ul className="space-y-1">
                 {megaMenuData.map((menu) => (
                   <li key={menu.label}>
-                    <a href="#" className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${menu.label === "Sale" ? "text-red-500 hover:bg-red-50" : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"}`}>
+                    <Link
+                      to={`/collection?category=${menu.label}`}
+                      onClick={closeAll}
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${menu.label === "Sale" ? "text-red-500 hover:bg-red-50" : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"}`}
+                    >
                       {menu.label}
                       {menu.categories.length > 0 && <ChevronDown size={14} />}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
