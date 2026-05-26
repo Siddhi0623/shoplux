@@ -3,7 +3,32 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Upload, X, Loader2, Check, ArrowLeft } from "lucide-react";
 import api, { backendUrl } from "../api";
 
-const CATEGORIES = ["Men", "Women", "Kids", "Shoes", "Electronics", "Beauty"];
+// Mirrors the main website's mega-menu structure exactly
+const MENU_DATA = {
+  Men: {
+    Clothing:    ["T-Shirts", "Shirts", "Jackets", "Jeans", "Shorts", "Suits"],
+    Shoes:       ["Sneakers", "Boots", "Loafers", "Sandals", "Formal", "Running"],
+    Accessories: ["Watches", "Belts", "Sunglasses", "Wallets", "Hats", "Bags"],
+  },
+  Women: {
+    Clothing:    ["Dresses", "Tops", "Blazers", "Jeans", "Skirts", "Coats"],
+    Shoes:       ["Heels", "Flats", "Sneakers", "Boots", "Sandals", "Mules"],
+    Accessories: ["Handbags", "Jewelry", "Scarves", "Sunglasses", "Hats", "Belts"],
+  },
+  Kids: {
+    Boys:  ["T-Shirts", "Shorts", "Sneakers", "Jackets", "Jeans", "Hoodies"],
+    Girls: ["Dresses", "Tops", "Shoes", "Skirts", "Leggings", "Coats"],
+    Baby:  ["Onesies", "Rompers", "Shoes", "Bibs", "Sleepwear", "Sets"],
+  },
+  Electronics: {
+    Phones:  ["Smartphones", "Cases", "Chargers", "Screen Guards", "Earphones", "Power Banks"],
+    Laptops: ["Gaming", "Business", "Ultrabooks", "Accessories", "Monitors", "Keyboards"],
+    Audio:   ["Headphones", "Earbuds", "Speakers", "Soundbars", "Microphones", "DACs"],
+  },
+  Sale: {},
+};
+
+const TOP_CATEGORIES = Object.keys(MENU_DATA);
 
 const inputStyle = {
   width: "100%",
@@ -39,13 +64,24 @@ export default function AddProduct() {
   const fileRef  = useRef(null);
 
   const [form, setForm] = useState({
-    name: "", price: "", description: "", category: "Men", stock: "",
+    name: "", price: "", description: "",
+    category: "Men", subCategory: "", stock: "",
   });
   const [image,   setImage]   = useState(null);
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error,   setError]   = useState("");
+
+  // Sections within the selected top-level category  e.g. { Clothing: [...], Shoes: [...] }
+  const sections     = MENU_DATA[form.category] || {};
+  const sectionKeys  = Object.keys(sections);   // e.g. ["Clothing", "Shoes", "Accessories"]
+  const hasSections  = sectionKeys.length > 0;
+
+  // When category changes, reset subCategory
+  const handleCategory = (e) => {
+    setForm((prev) => ({ ...prev, category: e.target.value, subCategory: "" }));
+  };
 
   // Load existing product when editing
   useEffect(() => {
@@ -58,6 +94,7 @@ export default function AddProduct() {
         price:       p.price,
         description: p.description,
         category:    p.category,
+        subCategory: p.subCategory || "",
         stock:       p.stock ?? "",
       });
       if (p.image) {
@@ -96,6 +133,7 @@ export default function AddProduct() {
       fd.append("price",       form.price);
       fd.append("description", form.description);
       fd.append("category",    form.category);
+      fd.append("subCategory", form.subCategory);
       fd.append("stock",       form.stock || 0);
       if (image) fd.append("image", image);
 
@@ -235,12 +273,34 @@ export default function AddProduct() {
             </Field>
           </div>
 
-          {/* Category */}
+          {/* ── Category ── */}
           <Field label="Category" required>
-            <select name="category" value={form.category} onChange={handle} style={inputStyle}>
-              {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+            <select name="category" value={form.category} onChange={handleCategory} style={inputStyle}>
+              {TOP_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
             </select>
           </Field>
+
+          {/* ── Sub Category (cascading) ── */}
+          {hasSections && (
+            <Field label="Sub Category" required>
+              <select
+                name="subCategory"
+                value={form.subCategory}
+                onChange={handle}
+                required={hasSections}
+                style={inputStyle}
+              >
+                <option value="">— Select sub category —</option>
+                {sectionKeys.map((section) => (
+                  <optgroup key={section} label={`── ${section} ──`}>
+                    {sections[section].map((item) => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </Field>
+          )}
 
           {/* Description */}
           <Field label="Description" required>
