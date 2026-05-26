@@ -22,8 +22,12 @@ const addProduct = async (req, res) => {
       isFeatured,
     } = req.body;
 
-    // IMAGE — Cloudinary returns the full URL in req.file.path
-    const image = req.file ? req.file.path : "";
+    // IMAGE — multer-storage-cloudinary puts URL in path or secure_url
+    const image = req.file
+      ? (req.file.path || req.file.secure_url || req.file.url || "")
+      : "";
+    console.log("Upload file info:", req.file);
+    console.log("Stored image URL:", image);
 
     // CREATE PRODUCT
     const newProduct = new productModel({
@@ -170,7 +174,7 @@ const updateProduct = async (req, res) => {
 
     // UPDATE IMAGE IF NEW ONE UPLOADED
     if (req.file) {
-      updateData.image = req.file.filename;
+      updateData.image = req.file.path || req.file.secure_url || req.file.url || "";
     }
 
     const product = await productModel.findByIdAndUpdate(
