@@ -22,8 +22,8 @@ const addProduct = async (req, res) => {
       isFeatured,
     } = req.body;
 
-    // IMAGE
-    const image = req.file ? req.file.filename : "";
+    // IMAGE — Cloudinary returns the full URL in req.file.path
+    const image = req.file ? req.file.path : "";
 
     // CREATE PRODUCT
     const newProduct = new productModel({

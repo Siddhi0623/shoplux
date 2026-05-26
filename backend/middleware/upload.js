@@ -1,53 +1,20 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js";
 
-
-// ENSURE uploads/ FOLDER EXISTS
-const uploadDir = "uploads";
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-
-// STORAGE CONFIG
-const storage = multer.diskStorage({
-
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
+// Store uploads directly to Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder:         "shoplux/products",
+    allowed_formats: ["jpg", "jpeg", "png", "webp", "gif"],
+    transformation: [{ width: 800, height: 800, crop: "limit", quality: "auto" }],
   },
-
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, file.fieldname + "-" + uniqueSuffix + ext);
-  },
-
 });
 
-
-// FILE TYPE FILTER
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp|gif/;
-  const ext  = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mime = allowedTypes.test(file.mimetype);
-
-  if (ext && mime) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only image files are allowed: jpeg, jpg, png, webp, gif"), false);
-  }
-};
-
-
-// MULTER INSTANCE
 const upload = multer({
   storage,
-  fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5 MB max
-  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
 });
-
 
 export default upload;
